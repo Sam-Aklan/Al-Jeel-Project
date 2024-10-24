@@ -1,0 +1,9 @@
+model LectureTime{
+    id  String @id
+    lectureTimeName String
+    startTime   DateTime @db.Timestamp() 
+    endTime DateTime @db.Timestamp()
+    lecture Lecture[]
+    createAt DateTime @default(now())
+    updateAt DateTime @default(now())
+}

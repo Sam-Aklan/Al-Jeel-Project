@@ -1,0 +1,9 @@
+model LevelCourse{
+    id Int @id @default(autoincrement())
+    levelId String
+    courseId String
+    lecture Lecture[]
+    level Level @relation(references: [id], fields: [levelId])
+    course Course @relation(references: [id], fields: [courseId])
+    @@unique([levelId,courseId])
+}

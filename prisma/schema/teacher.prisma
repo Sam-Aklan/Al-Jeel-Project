@@ -1,0 +1,7 @@
+model Teacher{
+    id  String @id
+    teacherName String
+    specialization String @db.VarChar(50)
+    createAt DateTime @default(now())
+    updateAt DateTime @default(now())
+}

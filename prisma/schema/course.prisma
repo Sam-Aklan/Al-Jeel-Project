@@ -1,0 +1,7 @@
+model Course{
+    id String @id
+    courseName String @db.VarChar(50)
+    levelCourse LevelCourse[]
+    createAt DateTime @default(now())
+    updateAt DateTime @default(now())
+}

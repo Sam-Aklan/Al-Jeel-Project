@@ -1,0 +1,10 @@
+model Student{
+    id String @id 
+    name String
+    levelId String
+    level Level @relation(references: [id], fields: [levelId])
+    imagePath String?
+    dateOfBirth DateTime
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+}

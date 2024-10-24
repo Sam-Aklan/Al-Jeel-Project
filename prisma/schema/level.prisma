@@ -1,0 +1,9 @@
+
+model Level{
+    id  String     @id
+    levelName    String
+    createAt DateTime @default(now())
+    updateAt DateTime @default(now())
+    levelCourse LevelCourse[]
+    student Student[]
+}

@@ -1,0 +1,23 @@
+model Lecture{
+    id String @id
+    // teacherId String?
+    timeId String
+    levelCourseId Int
+    lectureDate DateTime
+    levelCourse LevelCourse @relation(fields: [levelCourseId],references: [id],onDelete: Cascade, onUpdate: Cascade)
+    // teacher Teacher? @relation(fields: [teacherId],references: [id],onDelete: SetNull,onUpdate: Cascade)
+    lectureTime LectureTime @relation(fields: [timeId],references: [id],onDelete: Cascade,onUpdate: Cascade)
+    createAt DateTime @default(now())
+    updateAt DateTime @default(now())
+    @@unique([levelCourseId,lectureDate,timeId])
+
+}
+
+// enum Weekdays{
+//     saturday
+//     sunday
+//     monday
+//     tuesday
+//     wendsday
+//     thrusday
+// }
