@@ -8,7 +8,9 @@ declare const module: any;
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const {httpAdapter} = app.get(HttpAdapterHost)
-  app.enableCors()
+  app.enableCors({origin:[
+    'http://localhost:5173',
+    ]})
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter))
   app.setGlobalPrefix('api')
@@ -19,6 +21,7 @@ async function bootstrap() {
     module.hot.accept();
     module.hot.dispose(() => app.close());
   }
+  
   await app.listen(3000);
 }
 bootstrap();
