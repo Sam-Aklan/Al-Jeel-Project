@@ -10,6 +10,7 @@ async function bootstrap() {
   const {httpAdapter} = app.get(HttpAdapterHost)
   app.enableCors({origin:[
     'http://localhost:5173',
+    'https://aljeel-client.onrender.com'
     ]})
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter))
