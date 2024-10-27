@@ -9,8 +9,8 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const {httpAdapter} = app.get(HttpAdapterHost)
   app.enableCors({origin:[
-    'http://localhost:5173',
-    'https://aljeel-client.onrender.com'
+    process.env.LOCAL_CLIENT,
+    process.env.PROD_CLIENT
     ]})
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter))
