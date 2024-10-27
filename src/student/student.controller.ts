@@ -133,6 +133,7 @@ export class StudentController {
   async remove(
     @Param('id') id: string,
     @Query('oldImage')oldImage?:string) {
+      
       if (oldImage) {
         try {
           console.log(oldImage)
@@ -141,6 +142,6 @@ export class StudentController {
           throw err
         }
       }
-    return this.studentService.remove(id);
+    return await this.studentService.remove(id);
   }
 }

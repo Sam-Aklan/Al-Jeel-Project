@@ -2,7 +2,7 @@ model Student{
     id String @id 
     name String
     levelId String
-    level Level @relation(references: [id], fields: [levelId])
+    level Level @relation(references: [id], fields: [levelId],onDelete: Cascade,onUpdate:Cascade)
     imagePath String?
     dateOfBirth DateTime
     createdAt DateTime @default(now())
