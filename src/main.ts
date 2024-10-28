@@ -22,7 +22,6 @@ async function bootstrap() {
     module.hot.accept();
     module.hot.dispose(() => app.close());
   }
-  
   await app.listen(3000);
 }
 bootstrap();

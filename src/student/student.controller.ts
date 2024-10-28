@@ -3,21 +3,20 @@ import { StudentService } from './student.service';
 import { CreateStudentDto, studentSearchDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { filenameEditor, imageDeleteFn, imageFileFilter } from 'src/image.utils';
-import { FILE_UPLOADS_DIR } from 'src/constants';
-import { diskStorage } from 'multer';
+import { firebaseDeleteFn, firebaseEditor, imageDeleteFn, imageFileFilter } from 'src/image.utils';
+import { memoryStorage } from 'multer';
 import { response } from 'express';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { firestore } from 'src/firebase.config';
 
 @Controller('student')
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
   @UseInterceptors(FileInterceptor('image',{
-    storage:diskStorage({
-      filename:filenameEditor,
-      destination:(req,file,cb)=>cb(null,FILE_UPLOADS_DIR),
-    }),
+    storage:memoryStorage(),
     limits:{
-      fileSize: 1024 * 1024 * 2
+      fileSize: 1024 * 1024 * 2,
+      files:1,
     },
     fileFilter:imageFileFilter
   }))
@@ -26,8 +25,13 @@ export class StudentController {
         @Body() createStudentDto: CreateStudentDto,
         @UploadedFile()image:Express.Multer.File,
         @Res({passthrough:true})res:typeof response) {
+          let imageURL:string|undefined=undefined
           try {
-            if(image) createStudentDto.imagePath = image.filename
+            const editedName = firebaseEditor(image)
+            const imageRef = ref(firestore,'uploads/' + editedName)
+            const snapshot = await uploadBytes(imageRef, image.buffer);
+            imageURL = await getDownloadURL(snapshot.ref);
+            if(image && imageURL) createStudentDto.imagePath = imageURL
             
             return await this.studentService.create(createStudentDto);
           } catch (err:any) {
@@ -36,7 +40,7 @@ export class StudentController {
               return
             }
             console.log("deleting the uploaded image")
-            imageDeleteFn(image.filename)
+            if(imageURL)firebaseDeleteFn(imageURL)
             throw new Error(err.message)
           }
   }
@@ -62,15 +66,14 @@ export class StudentController {
   async findOne(@Param('id') id: string) {
     return this.studentService.findOne(id);
   }
+
   @UseInterceptors(FileInterceptor('updatedImage',{
-    storage:diskStorage({
-      filename:filenameEditor,
-      destination:(req,file,cb)=>cb(null,FILE_UPLOADS_DIR),
-    }),
+    storage:memoryStorage(),
     limits:{
-      fileSize: 1024 * 1024 * 2
+      fileSize: 1024 * 1024 * 2,
+      files:1
     },
-    fileFilter:imageFileFilter
+    fileFilter:imageFileFilter,
   }))
   @Patch(':id')
   async update(
@@ -84,25 +87,31 @@ export class StudentController {
       // if(!updatedImage){
       //   return this.studentService.update(id,updateStudentDto)
       // }
+      let imageURL:string|undefined = undefined
       if (updatedImage &&updateStudentDto.oldImage) {
         try {
           console.log("**** first if****")
-          imageDeleteFn(updateStudentDto.oldImage)
+          firebaseDeleteFn(updateStudentDto.oldImage)
+          const editedName = firebaseEditor(updatedImage)
+          const imageRef = ref(firestore,'uploads/' + editedName)
+          const snapshot = await uploadBytes(imageRef, updatedImage.buffer);
+          imageURL = await getDownloadURL(snapshot.ref);
+          if(updatedImage && imageURL) updateStudentDto.imagePath = imageURL
           updateStudentDto.oldImage = undefined
-          updateStudentDto.imagePath = updatedImage.filename
+          // updateStudentDto.imagePath = updatedImage.filename
           console.log("****** update image *******")
           console.log(updateStudentDto.imagePath)
           return this.studentService.update(id,updateStudentDto)
         } catch (err:any) {
           console.log("deleting updated image")
           console.log(updatedImage.filename)
-          imageDeleteFn(updatedImage.filename)
+          if(imageURL)firebaseDeleteFn(imageURL)
           throw new Error(err.message)
         }
       }
       if(updateStudentDto.oldImage && !updatedImage){
         console.log("deleteing old image")
-        imageDeleteFn(updateStudentDto.oldImage)
+        firebaseDeleteFn(updateStudentDto.oldImage)
         try {
           updateStudentDto.oldImage = undefined
           updateStudentDto.imagePath = null
@@ -112,7 +121,12 @@ export class StudentController {
         }
       }
       if(updatedImage && !updateStudentDto.oldImage){
-        updateStudentDto.imagePath = updatedImage.filename
+        const editedName = firebaseEditor(updatedImage)
+        const imageRef = ref(firestore,'uploads/' + editedName)
+        const snapshot = await uploadBytes(imageRef, updatedImage.buffer);
+        imageURL = await getDownloadURL(snapshot.ref);
+        if(updatedImage && imageURL) updateStudentDto.imagePath = imageURL
+        updateStudentDto.imagePath = imageURL
         console.log("update image no old: ", updateStudentDto.imagePath)
         console.log(updatedImage.filename)
       }
@@ -124,7 +138,7 @@ export class StudentController {
         updateStudentDto.oldImage = undefined
         return this.studentService.update(id, updateStudentDto);
       } catch (err:any) {
-        if(updatedImage)imageDeleteFn(updatedImage.filename)
+        if(updatedImage)firebaseDeleteFn(updatedImage.filename)
         throw new Error(err.message)
       }
   }
@@ -137,9 +151,9 @@ export class StudentController {
       if (oldImage) {
         try {
           console.log(oldImage)
-          imageDeleteFn(oldImage)
+          firebaseDeleteFn(oldImage)
         } catch (err:any) {
-          throw err
+          throw new Error (err.message)
         }
       }
     return await this.studentService.remove(id);

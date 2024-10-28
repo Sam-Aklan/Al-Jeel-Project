@@ -3,6 +3,8 @@ import { Request } from "express"
 import { FILE_UPLOADS_DIR } from "./constants"
 import * as fs from 'fs'
 import { join } from "path"
+import { firestore } from "./firebase.config"
+import { deleteObject, ref } from "firebase/storage"
 
 export const filenameEditor = (req:Request,file:Express.Multer.File, callback:(error:Error|null,filename:string)=>void)=>{
     const newFileName = new Date().toISOString().replace(/:/g, '-')+"_" + file.originalname
@@ -18,6 +20,11 @@ export const imageFileFilter = (req:Request,file:Express.Multer.File, callback:(
     return callback(null,true)
 }
 
+export const firebaseEditor = (file:Express.Multer.File)=>{
+    const newFileName = new Date().toISOString().replace(/:/g, '-')+"_" + file.originalname
+    return newFileName
+}
+
 export const imageDeleteFn = (oldPhotoPath:string)=>{
     const oldPath = join(FILE_UPLOADS_DIR,oldPhotoPath)
     if (fs.existsSync(oldPath)) {
@@ -27,4 +34,11 @@ export const imageDeleteFn = (oldPhotoPath:string)=>{
     return
     }
     throw new UnprocessableEntityException(`file dose not exists ${oldPath}`)
+}
+
+export const firebaseDeleteFn = (oldPhotoPath:string)=>{
+    const imageRef = ref(firestore,oldPhotoPath)
+    deleteObject(imageRef).then(()=> console.log("image deleted successfully")).catch(error=>{
+        throw new Error(error.message)
+    })
 }
